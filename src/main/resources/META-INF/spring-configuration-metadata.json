@@ -1,0 +1,30 @@
+{
+  "groups": [
+    {
+      "name": "encrypt",
+      "type": "com.kakuiwong.bean.EncryptConfigBean",
+      "sourceType": "com.kakuiwong.bean.EncryptConfigBean"
+    },
+    {
+      "name": "encrypt.type",
+      "type": "com.kakuiwong.bean.EncryptType",
+      "sourceType": "com.kakuiwong.bean.EncryptConfigBean",
+      "sourceMethod": "getType()"
+    }
+  ],
+  "properties": [
+    {
+      "name": "encrypt.secret",
+      "type": "java.lang.String",
+      "description": "秘钥,当所选加密类型需要时必填",
+      "sourceType": "com.kakuiwong.bean.EncryptConfigBean"
+    },
+    {
+      "name": "encrypt.type",
+      "type": "com.kakuiwong.bean.EncryptType",
+      "description": "加密类型",
+      "sourceType": "com.kakuiwong.bean.EncryptType"
+    }
+  ],
+  "hints": []
+}
