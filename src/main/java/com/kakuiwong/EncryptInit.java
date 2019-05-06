@@ -49,6 +49,7 @@ public class EncryptInit implements ApplicationContextAware, BeanFactoryPostProc
         switch (type) {
             case BASE64:
                 bean.setBeanClass(Base64EncryptHandler.class);
+                beanFactory.registerBeanDefinition("encryptHandler", bean);
                 break;
             case AES:
                 if (secret == null || "".equals(secret.trim())) {
@@ -56,6 +57,7 @@ public class EncryptInit implements ApplicationContextAware, BeanFactoryPostProc
                 }
                 bean.setBeanClass(AesEncryptHandler.class);
                 bean.getPropertyValues().add("secret", secret);
+                beanFactory.registerBeanDefinition("encryptHandler", bean);
                 break;
             case CUSTOM:
                 try {
@@ -64,7 +66,7 @@ public class EncryptInit implements ApplicationContextAware, BeanFactoryPostProc
                     throw new EncryptException("没有自定义加密处理器(No custom encryption processor)");
                 }
         }
-        beanFactory.registerBeanDefinition("encryptHandler", bean);
+
     }
 
     @Override
