@@ -1,11 +1,11 @@
-package com.kakuiwong.service.impl;
+package com.kakuiwong.service.encryService.impl;
 
-import com.kakuiwong.service.EncryptHandler;
+import com.kakuiwong.service.encryService.EncryptHandler;
 import org.springframework.util.Base64Utils;
 
 /**
- *@author gaoyang
- *@email  785175323@qq.com
+ * @author gaoyang
+ * @email 785175323@qq.com
  */
 public class Base64EncryptHandler implements EncryptHandler {
     @Override

@@ -1,41 +1,34 @@
 package com.kakuiwong;
 
-import com.kakuiwong.bean.EncryptConfigBean;
 import com.kakuiwong.bean.EncryptType;
 import com.kakuiwong.exception.EncryptException;
-import com.kakuiwong.service.EncryptHandler;
-import com.kakuiwong.service.impl.AesEncryptHandler;
-import com.kakuiwong.service.impl.Base64EncryptHandler;
+import com.kakuiwong.service.encryService.EncryptHandler;
+import com.kakuiwong.service.encryService.impl.AesEncryptHandler;
+import com.kakuiwong.service.encryService.impl.Base64EncryptHandler;
+import com.kakuiwong.service.encryService.impl.RsaEncryptHandler;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.config.BeanFactoryPostProcessor;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.springframework.beans.factory.support.GenericBeanDefinition;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.context.EnvironmentAware;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
 
-import javax.annotation.Resource;
-
 /**
  * @author gaoyang
  * @email 785175323@qq.com
  * 初始化
  */
-@EnableConfigurationProperties(value = {EncryptConfigBean.class})
 @Configuration
 @EnableAutoConfiguration
 public class EncryptInit implements ApplicationContextAware, BeanFactoryPostProcessor, EnvironmentAware {
 
-    public static ApplicationContext applicationContext;
-    public static Environment environment;
-    @Resource
-    EncryptConfigBean encryptConfigBean;
-
+    private ApplicationContext applicationContext;
+    private Environment environment;
 
     @Override
     public void postProcessBeanFactory(ConfigurableListableBeanFactory configurableListableBeanFactory) throws BeansException {
@@ -43,12 +36,19 @@ public class EncryptInit implements ApplicationContextAware, BeanFactoryPostProc
         GenericBeanDefinition bean = new GenericBeanDefinition();
         EncryptType type = environment.getProperty("encrypt.type", EncryptType.class);
         String secret = environment.getProperty("encrypt.secret", String.class);
+        String publicKey = environment.getProperty("encrypt.publicKey", String.class);
+        String privateKey = environment.getProperty("encrypt.privateKey", String.class);
+        Boolean debug = environment.getProperty("encrypt.debug", boolean.class);
+        if (debug != null && debug) {
+            return;
+        }
         if (type == null) {
             throw new EncryptException("没有定义加密类型(No encryption type is defined)");
         }
         switch (type) {
             case BASE64:
                 bean.setBeanClass(Base64EncryptHandler.class);
+                bean.setPrimary(true);
                 beanFactory.registerBeanDefinition("encryptHandler", bean);
                 break;
             case AES:
@@ -57,6 +57,20 @@ public class EncryptInit implements ApplicationContextAware, BeanFactoryPostProc
                 }
                 bean.setBeanClass(AesEncryptHandler.class);
                 bean.getPropertyValues().add("secret", secret);
+                bean.setPrimary(true);
+                beanFactory.registerBeanDefinition("encryptHandler", bean);
+                break;
+            case RSA:
+                if (publicKey == null || "".equals(publicKey.trim())) {
+                    throw new EncryptException("没有定义公钥(No publicKey is defined)");
+                }
+                if (privateKey == null || "".equals(privateKey.trim())) {
+                    throw new EncryptException("没有定义私钥(No privateKey is defined)");
+                }
+                bean.setBeanClass(RsaEncryptHandler.class);
+                bean.getPropertyValues().add("publicKey", publicKey);
+                bean.getPropertyValues().add("privateKey", privateKey);
+                bean.setPrimary(true);
                 beanFactory.registerBeanDefinition("encryptHandler", bean);
                 break;
             case CUSTOM:
@@ -66,7 +80,6 @@ public class EncryptInit implements ApplicationContextAware, BeanFactoryPostProc
                     throw new EncryptException("没有自定义加密处理器(No custom encryption processor)");
                 }
         }
-
     }
 
     @Override
@@ -78,5 +91,4 @@ public class EncryptInit implements ApplicationContextAware, BeanFactoryPostProc
     public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
         this.applicationContext = applicationContext;
     }
-
 }

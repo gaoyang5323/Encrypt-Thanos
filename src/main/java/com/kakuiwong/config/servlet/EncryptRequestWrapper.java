@@ -1,12 +1,13 @@
 package com.kakuiwong.config.servlet;
 
-import com.kakuiwong.service.EncryptHandler;
+import com.kakuiwong.service.encryService.EncryptHandler;
+import org.springframework.http.MediaType;
 
 import javax.servlet.ReadListener;
+import javax.servlet.ServletException;
 import javax.servlet.ServletInputStream;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletRequestWrapper;
-import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 
@@ -15,23 +16,28 @@ import java.io.IOException;
  * @email 785175323@qq.com
  */
 public class EncryptRequestWrapper extends HttpServletRequestWrapper {
-    private String body;
+    private byte[] body;
     private EncryptHandler encryptService;
 
-    public EncryptRequestWrapper(HttpServletRequest request, EncryptHandler encryptService) throws IOException {
+    public EncryptRequestWrapper(HttpServletRequest request, EncryptHandler encryptService) throws IOException, ServletException {
         super(request);
         this.encryptService = encryptService;
-        BufferedReader reader = request.getReader();
-        body = "";
-        String line;
-        while ((line = reader.readLine()) != null) {
-            body += line;
+        if (!request.getContentType().toLowerCase().equals(MediaType.APPLICATION_JSON_VALUE) && !request.getContentType().toLowerCase().equals(MediaType.APPLICATION_JSON_UTF8_VALUE.toLowerCase())) {
+            throw new ServletException("contentType error");
         }
+        ServletInputStream inputStream = request.getInputStream();
+        int contentLength = Integer.valueOf(request.getHeader("Content-Length"));
+        byte[] bytes = new byte[contentLength];
+        int readCount = 0;
+        while (readCount < contentLength) {
+            readCount += inputStream.read(bytes, readCount, contentLength - readCount);
+        }
+        body = bytes;
     }
 
     @Override
     public ServletInputStream getInputStream() throws IOException {
-        byte[] decode = encryptService.decode(body.getBytes());
+        byte[] decode = encryptService.decode(body);
         final ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(decode);
         return new ServletInputStream() {
             @Override
@@ -47,6 +53,7 @@ public class EncryptRequestWrapper extends HttpServletRequestWrapper {
             @Override
             public void setReadListener(ReadListener readListener) {
             }
+
             @Override
             public int read() throws IOException {
                 return byteArrayInputStream.read();

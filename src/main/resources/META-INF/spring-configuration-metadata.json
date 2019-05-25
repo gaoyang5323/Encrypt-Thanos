@@ -14,16 +14,35 @@
   ],
   "properties": [
     {
-      "name": "encrypt.secret",
-      "type": "java.lang.String",
-      "description": "秘钥,当所选加密类型需要时必填",
-      "sourceType": "com.kakuiwong.bean.EncryptConfigBean"
-    },
-    {
       "name": "encrypt.type",
       "type": "com.kakuiwong.bean.EncryptType",
-      "description": "加密类型",
+      "description": "加密类型(Encryption type)",
       "sourceType": "com.kakuiwong.bean.EncryptType"
+    },
+    {
+      "name": "encrypt.secret",
+      "type": "java.lang.String",
+      "description": "AES秘钥,当所选加密类型为AES时必填(AES secret key, which must be filled in when the selected encryption type is AES)"
+    },
+    {
+      "name": "encrypt.publicKey",
+      "type": "java.lang.String",
+      "description": "RSA公钥,当所选加密类型为RSA时必填(RSA public key, which must be filled in when the selected encryption type is RSA)"
+    },
+    {
+      "name": "encrypt.privateKey",
+      "type": "java.lang.String",
+      "description": "RSA私钥,当所选加密类型为RSA时必填(RSA private key, which must be filled in when the selected encryption type is RSA)"
+    },
+    {
+      "name": "encrypt.order",
+      "type": "java.lang.Integer",
+      "description": "过滤器启动序号(Filter Start Sequence Number)"
+    },
+    {
+      "name": "encrypt.debug",
+      "type": "java.lang.Boolean",
+      "description": "是否启用debug模式(Whether debug mode is enabled)"
     }
   ],
   "hints": []

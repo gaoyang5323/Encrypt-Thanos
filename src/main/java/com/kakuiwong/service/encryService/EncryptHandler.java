@@ -1,4 +1,4 @@
-package com.kakuiwong.service;
+package com.kakuiwong.service.encryService;
 
 /**
  * @author gaoyang

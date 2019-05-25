@@ -1,6 +1,6 @@
-package com.kakuiwong.service.impl;
+package com.kakuiwong.service.encryService.impl;
 
-import com.kakuiwong.service.EncryptHandler;
+import com.kakuiwong.service.encryService.EncryptHandler;
 import lombok.Setter;
 import org.springframework.util.Base64Utils;
 
