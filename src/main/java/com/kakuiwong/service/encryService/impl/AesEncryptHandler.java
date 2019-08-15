@@ -1,7 +1,6 @@
 package com.kakuiwong.service.encryService.impl;
 
 import com.kakuiwong.service.encryService.EncryptHandler;
-import lombok.Setter;
 import org.springframework.util.Base64Utils;
 
 import javax.crypto.Cipher;
@@ -14,10 +13,13 @@ import java.security.SecureRandom;
  * @author gaoyang
  * @email 785175323@qq.com
  */
-@Setter
 public class AesEncryptHandler implements EncryptHandler {
 
     private String secret;
+
+    public void setSecret(String secret) {
+        this.secret = secret;
+    }
 
     @Override
     public byte[] encode(byte[] b) {

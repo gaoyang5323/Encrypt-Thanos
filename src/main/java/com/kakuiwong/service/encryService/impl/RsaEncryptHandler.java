@@ -3,8 +3,7 @@ package com.kakuiwong.service.encryService.impl;
 import com.kakuiwong.bean.RsaKeyEntity;
 import com.kakuiwong.exception.EncryptException;
 import com.kakuiwong.service.encryService.EncryptHandler;
-import lombok.Setter;
-import org.apache.commons.codec.binary.Base64;
+import org.springframework.util.Base64Utils;
 
 import javax.crypto.Cipher;
 import java.security.*;
@@ -19,7 +18,6 @@ import java.util.Map;
  * @author gaoyang
  * @email 785175323@qq.com
  */
-@Setter
 public class RsaEncryptHandler implements EncryptHandler {
 
     private static final String KEY_ALGORITHM = "RSA";
@@ -29,10 +27,18 @@ public class RsaEncryptHandler implements EncryptHandler {
     private String publicKey;
     private String privateKey;
 
+    public void setPublicKey(String publicKey) {
+        this.publicKey = publicKey;
+    }
+
+    public void setPrivateKey(String privateKey) {
+        this.privateKey = privateKey;
+    }
+
     @Override
     public byte[] encode(byte[] content) {
         try {
-            byte[] bytes = encryptByPrivateKey(content, Base64.decodeBase64(privateKey));
+            byte[] bytes = encryptByPrivateKey(content, Base64Utils.decodeFromString(privateKey));
             return bytes;
         } catch (Exception e) {
             e.printStackTrace();
@@ -43,7 +49,7 @@ public class RsaEncryptHandler implements EncryptHandler {
     @Override
     public byte[] decode(byte[] content) {
         try {
-            byte[] bytes = decryptByPrivateKey(content, Base64.decodeBase64(privateKey));
+            byte[] bytes = decryptByPrivateKey(content, Base64Utils.decodeFromString(privateKey));
             return bytes;
         } catch (Exception e) {
             e.printStackTrace();
@@ -56,8 +62,8 @@ public class RsaEncryptHandler implements EncryptHandler {
         byte[] publicKey = getPublicKey(keyMap);
         byte[] privateKey = getPrivateKey(keyMap);
         RsaKeyEntity rsaKeyEntity = new RsaKeyEntity();
-        rsaKeyEntity.setPublicKey(Base64.encodeBase64String(publicKey));
-        rsaKeyEntity.setPrivateKey(Base64.encodeBase64String(privateKey));
+        rsaKeyEntity.setPublicKey(Base64Utils.encodeToString(publicKey));
+        rsaKeyEntity.setPrivateKey(Base64Utils.encodeToString(privateKey));
         return rsaKeyEntity;
     }
 
