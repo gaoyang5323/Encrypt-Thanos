@@ -29,7 +29,7 @@ public class EncryptFilter implements Filter {
 
     @Override
     public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse, FilterChain filterChain) throws IOException, ServletException {
-        if (this.isEncryptAnnotation.get()) {
+        if (isEncryptAnnotation.get()) {
             if (checkUri(((HttpServletRequest) servletRequest).getRequestURI())) {
                 this.chain(servletRequest, servletResponse, filterChain);
             } else {
@@ -45,7 +45,7 @@ public class EncryptFilter implements Filter {
         if (uri.endsWith("/")) {
             uri = uri.substring(0, uri.length() - 1);
         }
-        if (this.encryptCacheUri.contains(uri)) {
+        if (encryptCacheUri.contains(uri)) {
             return true;
         }
         return false;
@@ -57,11 +57,13 @@ public class EncryptFilter implements Filter {
         EncryptResponseWrapper response = new EncryptResponseWrapper((HttpServletResponse) servletResponse);
         filterChain.doFilter(request, response);
         byte[] responseData = response.getResponseData();
-        servletResponse.setContentLength(-1);
-        servletResponse.setContentType(MediaType.APPLICATION_JSON_UTF8_VALUE);
-        ServletOutputStream outputStream = servletResponse.getOutputStream();
-        outputStream.write(encryptService.encode(responseData));
-        outputStream.flush();
+        if (responseData.length > 0) {
+            byte[] encode = encryptService.encode(responseData);
+            servletResponse.setContentType(MediaType.APPLICATION_JSON_UTF8_VALUE);
+            ServletOutputStream outputStream = servletResponse.getOutputStream();
+            outputStream.write(encode);
+            outputStream.flush();
+        }
     }
 
 

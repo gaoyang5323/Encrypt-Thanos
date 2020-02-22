@@ -6,6 +6,7 @@ import com.kakuiwong.service.encryService.EncryptHandler;
 import org.springframework.util.Base64Utils;
 
 import javax.crypto.Cipher;
+import java.io.ByteArrayOutputStream;
 import java.security.*;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
@@ -24,6 +25,7 @@ public class RsaEncryptHandler implements EncryptHandler {
     private static final int KEY_SIZE = 512;
     private static final String PUBLIC_KEY = "RSAPublicKey";
     private static final String PRIVATE_KEY = "RSAPrivateKey";
+    private static final int MAX_ENCRYPT_BLOCK = (KEY_SIZE / 8) - 11;
     private String publicKey;
     private String privateKey;
 
@@ -81,15 +83,34 @@ public class RsaEncryptHandler implements EncryptHandler {
     }
 
     private static byte[] encryptByPrivateKey(byte[] data, byte[] key) throws Exception {
+        byte[] encryptedData = new byte[0];
         if (data.length == 0) {
-            return new byte[0];
+            return encryptedData;
         }
-        PKCS8EncodedKeySpec pkcs8KeySpec = new PKCS8EncodedKeySpec(key);
-        KeyFactory keyFactory = KeyFactory.getInstance(KEY_ALGORITHM);
-        PrivateKey privateKey = keyFactory.generatePrivate(pkcs8KeySpec);
-        Cipher cipher = Cipher.getInstance(keyFactory.getAlgorithm());
-        cipher.init(Cipher.ENCRYPT_MODE, privateKey);
-        return cipher.doFinal(data);
+        try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+            PKCS8EncodedKeySpec pkcs8KeySpec = new PKCS8EncodedKeySpec(key);
+            KeyFactory keyFactory = KeyFactory.getInstance(KEY_ALGORITHM);
+            PrivateKey privateKey = keyFactory.generatePrivate(pkcs8KeySpec);
+            Cipher cipher = Cipher.getInstance(keyFactory.getAlgorithm());
+            cipher.init(Cipher.ENCRYPT_MODE, privateKey);
+
+            int inputLen = data.length;
+            int offSet = 0;
+            byte[] cache;
+            int i = 0;
+            while (inputLen - offSet > 0) {
+                if (inputLen - offSet > MAX_ENCRYPT_BLOCK) {
+                    cache = cipher.doFinal(data, offSet, MAX_ENCRYPT_BLOCK);
+                } else {
+                    cache = cipher.doFinal(data, offSet, inputLen - offSet);
+                }
+                out.write(cache, 0, cache.length);
+                i++;
+                offSet = i * MAX_ENCRYPT_BLOCK;
+            }
+            encryptedData = out.toByteArray();
+        }
+        return encryptedData;
     }
 
     private static byte[] encryptByPublicKey(byte[] data, byte[] key) throws Exception {

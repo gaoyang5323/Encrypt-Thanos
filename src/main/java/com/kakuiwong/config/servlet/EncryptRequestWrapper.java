@@ -22,11 +22,17 @@ public class EncryptRequestWrapper extends HttpServletRequestWrapper {
     public EncryptRequestWrapper(HttpServletRequest request, EncryptHandler encryptService) throws IOException, ServletException {
         super(request);
         this.encryptService = encryptService;
-        if (!request.getContentType().toLowerCase().equals(MediaType.APPLICATION_JSON_VALUE) && !request.getContentType().toLowerCase().equals(MediaType.APPLICATION_JSON_UTF8_VALUE.toLowerCase())) {
-            throw new ServletException("contentType error");
+        if (request.getContentType() == null ||
+                (!request.getContentType().toLowerCase().equals(MediaType.APPLICATION_JSON_VALUE) &&
+                        !request.getContentType().toLowerCase().equals(MediaType.APPLICATION_JSON_UTF8_VALUE.toLowerCase()))) {
+            throw new ServletException("contentType error,Only application/json is supported ");
         }
         ServletInputStream inputStream = request.getInputStream();
-        int contentLength = Integer.valueOf(request.getHeader("Content-Length"));
+        String header = request.getHeader("Content-Length");
+        if (header != null) {
+            return;
+        }
+        int contentLength = Integer.valueOf(header);
         byte[] bytes = new byte[contentLength];
         int readCount = 0;
         while (readCount < contentLength) {

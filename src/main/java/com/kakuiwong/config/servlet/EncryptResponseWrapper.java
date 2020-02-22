@@ -20,7 +20,6 @@ public class EncryptResponseWrapper extends HttpServletResponseWrapper {
         output = new ByteArrayOutputStream();
     }
 
-
     @Override
     public ServletOutputStream getOutputStream() throws IOException {
         if (filterOutput == null) {
@@ -37,6 +36,14 @@ public class EncryptResponseWrapper extends HttpServletResponseWrapper {
 
                 @Override
                 public void setWriteListener(WriteListener writeListener) {
+                }
+
+                @Override
+                public void flush() throws IOException {
+                    if (output != null) {
+                        output.flush();
+                        output.close();
+                    }
                 }
             };
         }
