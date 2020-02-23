@@ -19,7 +19,7 @@ public class WebConfig {
 
     @Bean
     @Conditional(DefaultCondition.class)
-    public FilterRegistrationBean filterRegistrationBean() {
+    public FilterRegistrationBean encryptFilter() {
         Integer order = environment.getProperty("encrypt.order", Integer.class);
         FilterRegistrationBean bean = new FilterRegistrationBean();
         bean.setFilter(new EncryptFilter(encryptService));

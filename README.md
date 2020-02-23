@@ -1,4 +1,4 @@
-# Encrypt-Thanos `(springboot加密框架,灭霸特别版)`
+# Encrypt-Thanos `(springboot http传输加解密框架,灭霸特别版 jdk1.8+支持)`
 
 
 
@@ -12,7 +12,7 @@
 
 4) yml配置简单,并且提供提示描述
 
-
+注意:目前仅支持解密application/json数据提交方式;表单提交不进行解密!
 
 ------
 
@@ -25,7 +25,7 @@
 1) 下载源码,maven打包发布到本机,使用依赖方式或jar包方式集成
 
 ```
-		<dependency>
+	<dependency>
             <groupId>com.kakuiwong</groupId>
             <artifactId>Encrypt-Thanos</artifactId>
             <version>1.0</version>
@@ -36,25 +36,32 @@
 
 ```
 encrypt:
-  type: rsa #base64,aes,custom(支持base64编码,aes对称加密,rsa非对称加密,custom自定义加密方式)
-  privateKey:  #rsa私钥 
-  	123456789
-  publicKey:   #rsa公钥
-    123456789
-  debug: false #debug模式为true不开启加密
-  order: 1     #加密过滤器顺序号,不填则为0
- # secret:      #aes加密方式秘钥
- # 	123456789
+  type: rsa       #支持base64编码,aes对称加密,rsa非对称加密,custom自定义加密方式
+  privateKey:     #rsa私钥
+  publicKey:      #rsa公钥
+  debug: false    #debug模式为true不开启加密
+  order: 1        #加密过滤器顺序号,不填则为0
+  secret:         #aes加密方式秘钥
 ```
 
-3) 开启加密传输功能(伪代码)
+3) 开启全局加密(伪代码)
 
+此项必写,后面开启局部加密也要写
 ```
 @EnableEncrypt
 @SpringBootApplication
 public class Application {}
 ```
+4) 开启局部加密方式:
+```
+@RestController
+@SeparateEncrypt
+public class Web {}
 
+@PostMappint
+@SeparateEncrypt
+public Result get(@RequestBody Body body){}
+```
 
 
 #### 2.集成自定义加密模式
@@ -69,7 +76,7 @@ encrypt:
 2) 编写自定义加密实现
 
 ```
-//实现EncryptHandler接口并注册到spring
+//实现EncryptHandler接口并注册到spring容器
 @Component
 public class EncryptCustom implements EncryptHandler {
 	//出参加密
@@ -85,27 +92,7 @@ public class EncryptCustom implements EncryptHandler {
 }
 ```
 
-#### 3.开启细粒度加密方式
-
-1) 类级别加密:
-
-```
-@SeparateEncrypt
-@RestController
-public class ControllerDemo {}
-```
-
-2) 方法级别加密:
-
-```
-@SeparateEncrypt
-@PostMapping("/")
-public Object test(@RequestBody UserDemo userDemo) {}
-```
-
-#### 4.生成RSA公钥及私钥
-
-1) 测试用例
+#### 3.生成RSA公钥及私钥
 
 ```
 @Test
@@ -172,8 +159,8 @@ public class ControllerDemo {
         userDemo.setAge(27);
         userDemo.setName("gaoyang");
         //公钥加密传输
-        byte[] bytes = RSACoder.encryptByPublicKey(new ObjectMapper().writeValueAsString(userDemo).getBytes("utf-8"),
- Base64.decodeBase64("MFwwDQYJKo...."));
+        byte[] bytes = RSACoder.encryptByPublicKey(new ObjectMapper()
+        .writeValueAsString(userDemo).getBytes("utf-8"),Base64.decodeBase64("MFwwDQYJKo...."));
  		//构建http请求参数
         OkHttpClient c = new OkHttpClient();
         RequestBody requestBody = RequestBody.create(MediaType.parse("application/json;charset=UTF-8"), bytes);

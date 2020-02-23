@@ -1,7 +1,6 @@
 package com.kakuiwong.config.servlet;
 
 import com.kakuiwong.service.encryService.EncryptHandler;
-import org.springframework.http.MediaType;
 
 import javax.servlet.ReadListener;
 import javax.servlet.ServletException;
@@ -15,21 +14,16 @@ import java.io.IOException;
  * @author gaoyang
  * @email 785175323@qq.com
  */
-public class EncryptRequestWrapper extends HttpServletRequestWrapper {
+public class EncryptBodyRequestWrapper extends HttpServletRequestWrapper {
     private byte[] body;
     private EncryptHandler encryptService;
 
-    public EncryptRequestWrapper(HttpServletRequest request, EncryptHandler encryptService) throws IOException, ServletException {
+    public EncryptBodyRequestWrapper(HttpServletRequest request, EncryptHandler encryptService) throws IOException, ServletException {
         super(request);
         this.encryptService = encryptService;
-        if (request.getContentType() == null ||
-                (!request.getContentType().toLowerCase().equals(MediaType.APPLICATION_JSON_VALUE) &&
-                        !request.getContentType().toLowerCase().equals(MediaType.APPLICATION_JSON_UTF8_VALUE.toLowerCase()))) {
-            throw new ServletException("contentType error,Only application/json is supported ");
-        }
         ServletInputStream inputStream = request.getInputStream();
         String header = request.getHeader("Content-Length");
-        if (header != null) {
+        if (header == null) {
             return;
         }
         int contentLength = Integer.valueOf(header);

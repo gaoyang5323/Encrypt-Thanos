@@ -1,6 +1,7 @@
 package com.kakuiwong.service.initService;
 
 import com.kakuiwong.annotation.SeparateEncrypt;
+import org.springframework.aop.support.AopUtils;
 import org.springframework.beans.factory.BeanCreationException;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
@@ -25,21 +26,31 @@ public class InitHandler {
         Map<String, Object> controllers = new HashMap<>();
         try {
             controllers = servletContext.getBeansWithAnnotation(Controller.class);
-        } catch (BeanCreationException e) {
-        }
-        try {
             restControllers = servletContext.getBeansWithAnnotation(RestController.class);
         } catch (BeanCreationException e) {
         }
+
         if (restControllers.size() > 0) {
-            List<Object> types = restControllers.values().stream().filter(v -> v.getClass().getAnnotation(SeparateEncrypt.class) != null).collect(Collectors.toList());
-            List<Object> notTypes = restControllers.values().stream().filter(v -> v.getClass().getAnnotation(SeparateEncrypt.class) == null).collect(Collectors.toList());
+            List<Class> types = restControllers.values().stream()
+                    .map(AopUtils::getTargetClass)
+                    .filter(v -> v.getAnnotation(SeparateEncrypt.class) != null)
+                    .collect(Collectors.toList());
+            List<Class> notTypes = restControllers.values().stream()
+                    .map(AopUtils::getTargetClass)
+                    .filter(v -> v.getAnnotation(SeparateEncrypt.class) == null)
+                    .collect(Collectors.toList());
             restcontrollerTypesHandler(types, encryptCacheUri);
             restcontrollerNotTypesHandler(notTypes, encryptCacheUri);
         }
         if (controllers.size() > 0) {
-            List<Object> types = controllers.values().stream().filter(v -> v.getClass().getAnnotation(SeparateEncrypt.class) != null).collect(Collectors.toList());
-            List<Object> notTypes = controllers.values().stream().filter(v -> v.getClass().getAnnotation(SeparateEncrypt.class) == null).collect(Collectors.toList());
+            List<Class> types = controllers.values().stream()
+                    .map(AopUtils::getTargetClass)
+                    .filter(v -> v.getAnnotation(SeparateEncrypt.class) != null)
+                    .collect(Collectors.toList());
+            List<Class> notTypes = controllers.values().stream()
+                    .map(AopUtils::getTargetClass)
+                    .filter(v -> v.getAnnotation(SeparateEncrypt.class) == null)
+                    .collect(Collectors.toList());
             controllerTypesHandler(types, encryptCacheUri);
             controllerNotTypesHandler(notTypes, encryptCacheUri);
         }
@@ -49,12 +60,11 @@ public class InitHandler {
         }
     }
 
-    private static void controllerNotTypesHandler(List<Object> types, Set<String> cacheUrl) {
+    private static void controllerNotTypesHandler(List<Class> types, Set<String> cacheUrl) {
         if (types.size() > 0) {
             types.stream().forEach(t -> {
-                Class<?> aClass = t.getClass();
-                Method[] declaredMethods = aClass.getDeclaredMethods();
-                String[] finalTypeUrl = typeUrl(aClass);
+                Method[] declaredMethods = t.getDeclaredMethods();
+                String[] finalTypeUrl = typeUrl(t);
                 List<Method> methods = Arrays.stream(declaredMethods).filter(d -> d.getAnnotation(SeparateEncrypt.class) != null).collect(Collectors.toList());
                 if (methods.size() == 0) {
                     return;
@@ -64,12 +74,11 @@ public class InitHandler {
         }
     }
 
-    private static void controllerTypesHandler(List<Object> types, Set<String> cacheUrl) {
+    private static void controllerTypesHandler(List<Class> types, Set<String> cacheUrl) {
         if (types.size() > 0) {
             types.stream().forEach(t -> {
-                Class<?> aClass = t.getClass();
-                Method[] declaredMethods = aClass.getDeclaredMethods();
-                String[] finalTypeUrl = typeUrl(aClass);
+                Method[] declaredMethods = t.getDeclaredMethods();
+                String[] finalTypeUrl = typeUrl(t);
                 if (declaredMethods.length == 0) {
                     return;
                 }
@@ -80,12 +89,11 @@ public class InitHandler {
     }
 
 
-    private static void restcontrollerNotTypesHandler(List<Object> types, Set<String> cacheUrl) {
+    private static void restcontrollerNotTypesHandler(List<Class> types, Set<String> cacheUrl) {
         if (types.size() > 0) {
             types.stream().forEach(t -> {
-                Class<?> aClass = t.getClass();
-                Method[] declaredMethods = aClass.getDeclaredMethods();
-                String[] finalTypeUrl = typeUrl(aClass);
+                Method[] declaredMethods = t.getDeclaredMethods();
+                String[] finalTypeUrl = typeUrl(t);
                 List<Method> methods = Arrays.stream(declaredMethods).filter(d -> d.getAnnotation(SeparateEncrypt.class) != null).collect(Collectors.toList());
                 if (methods.size() == 0) {
                     return;
@@ -95,12 +103,11 @@ public class InitHandler {
         }
     }
 
-    private static void restcontrollerTypesHandler(List<Object> types, Set<String> cacheUrl) {
+    private static void restcontrollerTypesHandler(List<Class> types, Set<String> cacheUrl) {
         if (types.size() > 0) {
             types.stream().forEach(t -> {
-                Class<?> aClass = t.getClass();
-                Method[] declaredMethods = aClass.getDeclaredMethods();
-                String[] finalTypeUrl = typeUrl(aClass);
+                Method[] declaredMethods = t.getDeclaredMethods();
+                String[] finalTypeUrl = typeUrl(t);
                 if (declaredMethods.length == 0) {
                     return;
                 }
@@ -120,28 +127,32 @@ public class InitHandler {
 
     private static void restMethodHandler(List<Method> methods, String[] finalTypeUrl, Set<String> cacheUrl) {
         methods.forEach(m -> {
-            if (m.getAnnotation(PostMapping.class) != null || (m.getAnnotation(RequestMapping.class) != null
-                    && Arrays.stream(m.getAnnotation(RequestMapping.class).method()).allMatch(r -> !r.equals(RequestMethod.GET)))) {
-                urlHandler(m, finalTypeUrl, cacheUrl);
-            }
+            urlHandler(m, finalTypeUrl, cacheUrl);
         });
     }
 
     private static void MethodHandler(List<Method> methods, String[] finalTypeUrl, Set<String> cacheUrl) {
         methods.forEach(m -> {
-            if ((m.getAnnotation(PostMapping.class) != null && m.getAnnotation(ResponseBody.class) != null) || (m.getAnnotation(RequestMapping.class) != null
-                    && Arrays.stream(m.getAnnotation(RequestMapping.class).method()).allMatch(r -> !r.equals(RequestMethod.GET)) && m.getAnnotation(ResponseBody.class) != null)) {
-                urlHandler(m, finalTypeUrl, cacheUrl);
+            if (m.getAnnotation(RequestMapping.class) != null &&
+                    m.getAnnotation(ResponseBody.class) == null) {
+                return;
             }
+            urlHandler(m, finalTypeUrl, cacheUrl);
         });
     }
 
     private static void urlHandler(Method m, String[] finalTypeUrl, Set<String> cacheUrl) {
         String[] urls = null;
-        if (m.getAnnotation(PostMapping.class) != null) {
-            urls = m.getAnnotation(PostMapping.class).value();
-        } else {
+        if (m.getAnnotation(RequestMapping.class) != null) {
             urls = m.getAnnotation(RequestMapping.class).value();
+        } else if (m.getAnnotation(PostMapping.class) != null) {
+            urls = m.getAnnotation(PostMapping.class).value();
+        } else if (m.getAnnotation(GetMapping.class) != null) {
+            urls = m.getAnnotation(GetMapping.class).value();
+        } else if (m.getAnnotation(PutMapping.class) != null) {
+            urls = m.getAnnotation(PutMapping.class).value();
+        } else if (m.getAnnotation(DeleteMapping.class) != null) {
+            urls = m.getAnnotation(DeleteMapping.class).value();
         }
         if (urls != null) {
             Arrays.stream(urls).forEach(u -> {

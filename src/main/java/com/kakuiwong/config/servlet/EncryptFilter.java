@@ -26,17 +26,39 @@ public class EncryptFilter implements Filter {
         this.encryptService = encryptService;
     }
 
-
     @Override
     public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse, FilterChain filterChain) throws IOException, ServletException {
+        HttpServletRequest httpServletRequest = (HttpServletRequest) servletRequest;
         if (isEncryptAnnotation.get()) {
-            if (checkUri(((HttpServletRequest) servletRequest).getRequestURI())) {
-                this.chain(servletRequest, servletResponse, filterChain);
+            if (checkUri(httpServletRequest.getRequestURI())) {
+                this.chain(httpServletRequest, servletResponse, filterChain);
             } else {
                 filterChain.doFilter(servletRequest, servletResponse);
             }
         } else {
-            this.chain(servletRequest, servletResponse, filterChain);
+            this.chain(httpServletRequest, servletResponse, filterChain);
+        }
+    }
+
+    @Override
+    public void init(FilterConfig filterConfig) {
+        InitHandler.handler(filterConfig, encryptCacheUri, isEncryptAnnotation);
+        print();
+    }
+
+    @Override
+    public void destroy() {
+
+    }
+
+    private void print() {
+        if (!isEncryptAnnotation.get()) {
+            System.err.println("已开启全局加密");
+            return;
+        }
+        if (isEncryptAnnotation.get() && encryptCacheUri.size() > 0) {
+            System.err.println("已开启局部加密,加密请求路径:");
+            encryptCacheUri.stream().forEach(System.err::println);
         }
     }
 
@@ -51,9 +73,8 @@ public class EncryptFilter implements Filter {
         return false;
     }
 
-
-    private void chain(ServletRequest servletRequest, ServletResponse servletResponse, FilterChain filterChain) throws IOException, ServletException {
-        EncryptRequestWrapper request = new EncryptRequestWrapper((HttpServletRequest) servletRequest, encryptService);
+    private void chain(HttpServletRequest httpServletRequest, ServletResponse servletResponse, FilterChain filterChain) throws IOException, ServletException {
+        HttpServletRequest request = EncryptRequestWrapperFactory.getWrapper(httpServletRequest, encryptService);
         EncryptResponseWrapper response = new EncryptResponseWrapper((HttpServletResponse) servletResponse);
         filterChain.doFilter(request, response);
         byte[] responseData = response.getResponseData();
@@ -65,18 +86,4 @@ public class EncryptFilter implements Filter {
             outputStream.flush();
         }
     }
-
-
-    @Override
-    public void init(FilterConfig filterConfig) throws ServletException {
-        InitHandler.handler(filterConfig, encryptCacheUri, isEncryptAnnotation);
-    }
-
-
-    @Override
-    public void destroy() {
-
-    }
-
-
 }
