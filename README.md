@@ -22,17 +22,7 @@
 
 #### 1.开启加密功能
 
-1) 下载源码,maven打包发布到本机,使用依赖方式或jar包方式集成
-
-```
-	<dependency>
-            <groupId>com.kakuiwong</groupId>
-            <artifactId>Encrypt-Thanos</artifactId>
-            <version>1.0</version>
-        </dependency>
-```
-
-2) 编写yml配置文件开启功能
+1) 编写yml配置文件开启功能
 
 ```
 encrypt:
