@@ -102,7 +102,7 @@ public void test() throws Exception {
 
 #### 1.Integrated RSA encrypted transmission mode
 
-1) yml configuration
+1)yml configuration
 ```
 server:
   port: 8888
@@ -114,56 +114,80 @@ encrypt:
     MFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBAJrJP9Tn8rK6MlRP........
 ```
 
-2) Controller test code
+2)Test case code
+
+
+pojo:
 
 ```
-@SeparateEncrypt
-@RestController
-public class ControllerDemo {
-	
-    @Data
-    public static class UserDemo {
-        private String name;
-        private Integer age;
+public class Student {
+
+    private int age;
+    private String name;
+
+    public int getAge() {
+        return age;
     }
 
-    @ResponseBody
-    @PostMapping({"test"})
-    public Object tt(@RequestBody(required = false) UserDemo userDemo) {
-        System.out.println(userDemo);
-        return userDemo;
+    public void setAge(int age) {
+        this.age = age;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
     }
 }
-
 ```
 
-3) Test case code
+controller:
 
 ```
-	@Test
-        public void test () throws Exception {
-        // Incoming parameters
-            ControllerDemo.UserDemo userDemo = new ControllerDemo.UserDemo ();
-            userDemo.setAge (27);
-            userDemo.setName ("gaoyang");
-            // public key encrypted transmission
-            byte [] bytes = RSACoder.encryptByPublicKey (new ObjectMapper ()
-            .writeValueAsString (userDemo) .getBytes ("utf-8"), Base64.decodeBase64 ("MFwwDQYJKo ...."));
-     // Build http request parameters
-            OkHttpClient c = new OkHttpClient ();
-            RequestBody requestBody = RequestBody.create (MediaType.parse ("application / json; charset = UTF-8"), bytes);
-            Request request = new Request.Builder ()
-                    .url ("http: // localhost: 8888 / test")
-                    .post (requestBody)
-                    .build ();
-            Call call = c.newCall (request);
-            Response execute = call.execute ();
-            // Get back end array of bytes
-            byte [] resultByte = execute.body (). bytes ();
-            // public key decryption
-            byte [] result = RSACoder.decryptByPublicKey (resultByte, Base64.decodeBase64 ("MFwwDQYJKoZIhv ....."));
-            System.out.println (new String (result));
-        }
+    @SeparateEncrypt
+    @RequestMapping("test")
+    public Object t3(@RequestBody(required = false) Student student) {
+        student.setAge(18);
+        student.setName("gaoyang2");
+        return student;
+    }
+```
+
+
+test:
+```
+    @Test
+    public void test() throws Exception {
+        Student s = new Student();
+        s.setAge(28);
+        s.setName("gaoyang");
+
+        RsaEncryptHandler rsaEncryptHandler = new RsaEncryptHandler();
+        rsaEncryptHandler.setPublicKey("MFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBAJ94IIx/5qw6KipB9+y62l7Z6sIrmhpA/lrL5cXslXP7Iwa4ZeX2xHJhXlNRi6Eyv3nx67O+1kbTIe6rJuE1fe0CAwEAAQ==");
+        rsaEncryptHandler.setPrivateKey("MIIBVQIBADANBgkqhkiG9w0BAQEFAASCAT8wggE7AgEAAkEAn3ggjH/mrDoqKkH37LraXtnqwiuaGkD+WsvlxeyVc/sjBrhl5fbEcmFeU1GLoTK/efHrs77WRtMh7qsm4TV97QIDAQABAkBb9ArguUer/AYgQ9XQHZaZpxKlUDsV9HA2rugZjuhG7Zoq0J8sXZxtGt3GfS02OTJ5D7xHKAZ5FpLQpxwnS71JAiEAyilhNwKLSRmA0Ee/0s0EvKG7LJBjE1ymqXXGsX6s8mMCIQDJ8CP/LVzRIb1EuYow5nQ3C6EUh1TJUM98zKnlbcCXbwIgTZFXBb5qJyAr9r6w8XdMy/vaT50PBszT/c188XnDbjUCIQC3E9gOyPmVQJlvbSc0HjrOjOSE0Ay2V2VFJ+f/8PjiUQIhALCvioDG38FxtxWOFvN2kZvahrL33Ht23TnaZLJ70ceh");
+
+        byte[] bytes = rsaEncryptHandler.encryptByPublicKey(new ObjectMapper()
+                .writeValueAsString(s).getBytes("utf-8"), Base64Utils.decodeFromString(rsaEncryptHandler.getPublicKey()));
+        OkHttpClient c = new OkHttpClient();
+        RequestBody requestBody = RequestBody.create(MediaType.parse("application/json;charset=UTF-8"), bytes);
+        Request request = new Request.Builder()
+                .url("http://localhost:8080/test")
+                .post(requestBody)
+                .build();
+        Call call = c.newCall(request);
+        Response execute = call.execute();
+        byte[] bytes1 = execute.body().bytes();
+
+        byte[] decode = rsaEncryptHandler.decryptByPublicKey(bytes1, Base64Utils.decodeFromString(rsaEncryptHandler.getPublicKey()));
+        System.out.println(new String(new String(decode)));
+    }
+```
+out:
+
+```
+{"age":18,"name":"gaoyang2"}
 ```
 
 

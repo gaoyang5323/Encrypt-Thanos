@@ -11,6 +11,7 @@ import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.LongAdder;
 
 /**
  * @author gaoyang
@@ -52,13 +53,28 @@ public class EncryptFilter implements Filter {
     }
 
     private void print() {
+        System.out.println("___________                                   __            ___________.__                                \n" +
+                "\\_   _____/ ____   ___________ ___.__._______/  |_          \\__    ___/|  |__ _____    ____   ____  ______\n" +
+                " |    __)_ /    \\_/ ___\\_  __ <   |  |\\____ \\   __\\  ______   |    |   |  |  \\\\__  \\  /    \\ /  _ \\/  ___/\n" +
+                " |        \\   |  \\  \\___|  | \\/\\___  ||  |_> >  |   /_____/   |    |   |   Y  \\/ __ \\|   |  (  <_> )___ \\ \n" +
+                "/_______  /___|  /\\___  >__|   / ____||   __/|__|             |____|   |___|  (____  /___|  /\\____/____  >\n" +
+                "        \\/     \\/     \\/       \\/     |__|                                  \\/     \\/     \\/           \\/ ");
         if (!isEncryptAnnotation.get()) {
-            System.err.println("已开启全局加密");
+            System.out.println("Global encryption turned on");
             return;
         }
         if (isEncryptAnnotation.get() && encryptCacheUri.size() > 0) {
-            System.err.println("已开启局部加密,加密请求路径:");
-            encryptCacheUri.stream().forEach(System.err::println);
+            System.out.println("Local encryption turned on:");
+            LongAdder adder = new LongAdder();
+            encryptCacheUri.stream().forEach(url -> {
+                System.out.print(url + "   ");
+                if (adder.intValue() == 10) {
+                    System.out.println();
+                    adder.reset();
+                }
+                adder.increment();
+            });
+            System.out.println();
         }
     }
 

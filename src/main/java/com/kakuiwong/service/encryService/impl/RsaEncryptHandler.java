@@ -5,7 +5,9 @@ import com.kakuiwong.exception.EncryptException;
 import com.kakuiwong.service.encryService.EncryptHandler;
 import org.springframework.util.Base64Utils;
 
+import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
+import javax.crypto.IllegalBlockSizeException;
 import java.io.ByteArrayOutputStream;
 import java.security.*;
 import java.security.interfaces.RSAPrivateKey;
@@ -25,12 +27,17 @@ public class RsaEncryptHandler implements EncryptHandler {
     private static final int KEY_SIZE = 512;
     private static final String PUBLIC_KEY = "RSAPublicKey";
     private static final String PRIVATE_KEY = "RSAPrivateKey";
-    private static final int MAX_ENCRYPT_BLOCK = (KEY_SIZE / 8) - 11;
+    private static final int MAX_ENCODE_BLOCK = (KEY_SIZE / 8) - 11;
+    private static final int MAX_DECODE_BLOCK = KEY_SIZE / 8;
     private String publicKey;
     private String privateKey;
 
     public void setPublicKey(String publicKey) {
         this.publicKey = publicKey;
+    }
+
+    public String getPublicKey() {
+        return publicKey;
     }
 
     public void setPrivateKey(String privateKey) {
@@ -79,10 +86,9 @@ public class RsaEncryptHandler implements EncryptHandler {
         keyMap.put(PUBLIC_KEY, publicKey);
         keyMap.put(PRIVATE_KEY, privateKey);
         return keyMap;
-
     }
 
-    private static byte[] encryptByPrivateKey(byte[] data, byte[] key) throws Exception {
+    public static byte[] encryptByPrivateKey(byte[] data, byte[] key) throws Exception {
         byte[] encryptedData = new byte[0];
         if (data.length == 0) {
             return encryptedData;
@@ -94,53 +100,60 @@ public class RsaEncryptHandler implements EncryptHandler {
             Cipher cipher = Cipher.getInstance(keyFactory.getAlgorithm());
             cipher.init(Cipher.ENCRYPT_MODE, privateKey);
 
-            int inputLen = data.length;
-            int offSet = 0;
-            byte[] cache;
-            int i = 0;
-            while (inputLen - offSet > 0) {
-                if (inputLen - offSet > MAX_ENCRYPT_BLOCK) {
-                    cache = cipher.doFinal(data, offSet, MAX_ENCRYPT_BLOCK);
-                } else {
-                    cache = cipher.doFinal(data, offSet, inputLen - offSet);
-                }
-                out.write(cache, 0, cache.length);
-                i++;
-                offSet = i * MAX_ENCRYPT_BLOCK;
-            }
-            encryptedData = out.toByteArray();
+            encryptedData = doFinal(data, cipher, out, MAX_ENCODE_BLOCK);
         }
         return encryptedData;
     }
 
-    private static byte[] encryptByPublicKey(byte[] data, byte[] key) throws Exception {
-        KeyFactory keyFactory = KeyFactory.getInstance(KEY_ALGORITHM);
-        X509EncodedKeySpec x509KeySpec = new X509EncodedKeySpec(key);
-        PublicKey pubKey = keyFactory.generatePublic(x509KeySpec);
-        Cipher cipher = Cipher.getInstance(keyFactory.getAlgorithm());
-        cipher.init(Cipher.ENCRYPT_MODE, pubKey);
-        return cipher.doFinal(data);
-    }
-
-    private static byte[] decryptByPrivateKey(byte[] data, byte[] key) throws Exception {
+    public static byte[] encryptByPublicKey(byte[] data, byte[] key) throws Exception {
+        byte[] encryptedData = new byte[0];
         if (data.length == 0) {
-            return new byte[0];
+            return encryptedData;
         }
-        PKCS8EncodedKeySpec pkcs8KeySpec = new PKCS8EncodedKeySpec(key);
-        KeyFactory keyFactory = KeyFactory.getInstance(KEY_ALGORITHM);
-        PrivateKey privateKey = keyFactory.generatePrivate(pkcs8KeySpec);
-        Cipher cipher = Cipher.getInstance(keyFactory.getAlgorithm());
-        cipher.init(Cipher.DECRYPT_MODE, privateKey);
-        return cipher.doFinal(data);
+        try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+            KeyFactory keyFactory = KeyFactory.getInstance(KEY_ALGORITHM);
+            X509EncodedKeySpec x509KeySpec = new X509EncodedKeySpec(key);
+            PublicKey pubKey = keyFactory.generatePublic(x509KeySpec);
+            Cipher cipher = Cipher.getInstance(keyFactory.getAlgorithm());
+            cipher.init(Cipher.ENCRYPT_MODE, pubKey);
+
+            encryptedData = doFinal(data, cipher, out, MAX_ENCODE_BLOCK);
+        }
+        return encryptedData;
     }
 
-    private static byte[] decryptByPublicKey(byte[] data, byte[] key) throws Exception {
-        KeyFactory keyFactory = KeyFactory.getInstance(KEY_ALGORITHM);
-        X509EncodedKeySpec x509KeySpec = new X509EncodedKeySpec(key);
-        PublicKey pubKey = keyFactory.generatePublic(x509KeySpec);
-        Cipher cipher = Cipher.getInstance(keyFactory.getAlgorithm());
-        cipher.init(Cipher.DECRYPT_MODE, pubKey);
-        return cipher.doFinal(data);
+    public static byte[] decryptByPrivateKey(byte[] data, byte[] key) throws Exception {
+        byte[] encryptedData = new byte[0];
+        if (data.length == 0) {
+            return encryptedData;
+        }
+        try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+            PKCS8EncodedKeySpec pkcs8KeySpec = new PKCS8EncodedKeySpec(key);
+            KeyFactory keyFactory = KeyFactory.getInstance(KEY_ALGORITHM);
+            PrivateKey privateKey = keyFactory.generatePrivate(pkcs8KeySpec);
+            Cipher cipher = Cipher.getInstance(keyFactory.getAlgorithm());
+            cipher.init(Cipher.DECRYPT_MODE, privateKey);
+
+            encryptedData = doFinal(data, cipher, out, MAX_DECODE_BLOCK);
+        }
+        return encryptedData;
+    }
+
+    public static byte[] decryptByPublicKey(byte[] data, byte[] key) throws Exception {
+        byte[] encryptedData = new byte[0];
+        if (data.length == 0) {
+            return encryptedData;
+        }
+        try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+            KeyFactory keyFactory = KeyFactory.getInstance(KEY_ALGORITHM);
+            X509EncodedKeySpec x509KeySpec = new X509EncodedKeySpec(key);
+            PublicKey pubKey = keyFactory.generatePublic(x509KeySpec);
+            Cipher cipher = Cipher.getInstance(keyFactory.getAlgorithm());
+            cipher.init(Cipher.DECRYPT_MODE, pubKey);
+
+            encryptedData = doFinal(data, cipher, out, MAX_DECODE_BLOCK);
+        }
+        return encryptedData;
     }
 
     private static byte[] getPrivateKey(Map<String, Object> keyMap) {
@@ -151,5 +164,23 @@ public class RsaEncryptHandler implements EncryptHandler {
     private static byte[] getPublicKey(Map<String, Object> keyMap) throws Exception {
         Key key = (Key) keyMap.get(PUBLIC_KEY);
         return key.getEncoded();
+    }
+
+    private static byte[] doFinal(byte[] data, Cipher cipher, ByteArrayOutputStream out, int MAX_BLOCK) throws BadPaddingException, IllegalBlockSizeException {
+        int inputLen = data.length;
+        int offSet = 0;
+        byte[] cache;
+        int i = 0;
+        while (inputLen - offSet > 0) {
+            if (inputLen - offSet > MAX_BLOCK) {
+                cache = cipher.doFinal(data, offSet, MAX_BLOCK);
+            } else {
+                cache = cipher.doFinal(data, offSet, inputLen - offSet);
+            }
+            out.write(cache, 0, cache.length);
+            i++;
+            offSet = i * MAX_BLOCK;
+        }
+        return out.toByteArray();
     }
 }
