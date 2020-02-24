@@ -1,48 +1,48 @@
-# Encrypt-Thanos `(springboot http传输加解密框架,灭霸特别版 jdk1.8+支持)`
+# Encrypt-Thanos `(springboot http transmission encryption and decryption framework, special edition jdk1.8 + support)`
 
 
 
-## 一.功能介绍
+## 1. Function introduction
 
-1) springboot,springcloud项目快速开启前后端数据传输加密
+1) Springboot, springcloud project quickly open front-end and back-end data transmission encryption
 
-2) 提供多种加密方式(对称,非对称),支持自定义加密方式
+2) Provide multiple encryption methods (symmetric, asymmetric), support custom encryption methods
 
-3) 集成简单,一个@EnableEncrypt注解即可开启全局加密规则,并支持@SeparateEncrypt类级别或方法级别细粒度控制加密
+3) Simple integration, a @EnableEncrypt annotation can turn on global encryption rules, and supports @SeparateEncrypt class-level or method-level fine-grained control of encryption
 
-4) yml配置简单,并且提供提示描述
+4) yml configuration is simple and provides prompt description
 
-注意:目前仅支持解密application/json数据提交方式;表单提交不进行解密!
+Note: Currently only decryption of application / json data submission is supported; form submission is not decrypted!
 
 ------
 
 
 
-## 二.集成方式
+## 二 .Integration
 
-#### 1.开启加密功能
+#### 1. Enable encryption
 
-1) 编写yml配置文件开启功能
+1) Write yml configuration file to enable the function
 
 ```
 encrypt:
-  type: rsa       #支持base64编码,aes对称加密,rsa非对称加密,custom自定义加密方式
-  privateKey:     #rsa私钥
-  publicKey:      #rsa公钥
-  debug: false    #debug模式为true不开启加密
-  order: 1        #加密过滤器顺序号,不填则为0
-  secret:         #aes加密方式秘钥
+   type: rsa #Support base64 encoding, aes symmetric encryption, rsa asymmetric encryption, custom custom encryption method
+   privateKey: #rsaPrivate key
+   publicKey: #rsa
+   debug: false #debug mode is true without encryption
+   order: 1 #Encryption filter sequence number, if not filled, it is 0
+   secret: #aes encryption key
 ```
 
-3) 开启全局加密(伪代码)
+3) Turn on global encryption (pseudo code)
 
-此项必写,后面开启局部加密也要写
+This item must be written, and it must be written later when local encryption is turned on
 ```
 @EnableEncrypt
 @SpringBootApplication
 public class Application {}
 ```
-4) 开启局部加密方式:
+4) Enable local encryption:
 ```
 @RestController
 @SeparateEncrypt
@@ -54,35 +54,35 @@ public Result get(@RequestBody Body body){}
 ```
 
 
-#### 2.集成自定义加密模式
+#### 2.Integrated custom encryption mode
 
-1) yml配置为自定义方式
+1) yml is configured as a custom method
 
 ```
 encrypt:
   type: custom
 ```
 
-2) 编写自定义加密实现
+2) Write custom encryption implementation
 
 ```
-//实现EncryptHandler接口并注册到spring容器
+// Implement the EncryptHandler interface and register it with the spring container
 @Component
 public class EncryptCustom implements EncryptHandler {
-	//出参加密
-    @Override
-    public byte[] encode(byte[] content) {
-        return content;
-    }
-    //入参解密
-    @Override
-    public byte[] decode(byte[] content) {
-        return content;
-    }
+// out attendance
+     @Override
+     public byte [] encode (byte [] content) {
+         return content;
+     }
+     // Entry parameter decryption
+     @Override
+     public byte [] decode (byte [] content) {
+         return content;
+     }
 }
 ```
 
-#### 3.生成RSA公钥及私钥
+#### 3. Generate RSA public and private keys
 
 ```
 @Test
@@ -98,13 +98,11 @@ public void test() throws Exception {
 ------
 
 
+## Three. Function Demo
 
-## 三.功能演示
+#### 1.Integrated RSA encrypted transmission mode
 
-#### 1.集成RSA加密传输模式
-
-1) yml配置
-
+1) yml configuration
 ```
 server:
   port: 8888
@@ -116,14 +114,14 @@ encrypt:
     MFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBAJrJP9Tn8rK6MlRP........
 ```
 
-2) controller测试代码
+2) Controller test code
 
 ```
 @SeparateEncrypt
 @RestController
 public class ControllerDemo {
 	
-	@Data
+    @Data
     public static class UserDemo {
         private String name;
         private Integer age;
@@ -139,31 +137,107 @@ public class ControllerDemo {
 
 ```
 
-3)测试用例代码
+3) Test case code
 
 ```
 	@Test
-    public void test() throws Exception {
-    	//传入参数
-        ControllerDemo.UserDemo userDemo = new ControllerDemo.UserDemo();
-        userDemo.setAge(27);
-        userDemo.setName("gaoyang");
-        //公钥加密传输
-        byte[] bytes = RSACoder.encryptByPublicKey(new ObjectMapper()
-        .writeValueAsString(userDemo).getBytes("utf-8"),Base64.decodeBase64("MFwwDQYJKo...."));
- 		//构建http请求参数
-        OkHttpClient c = new OkHttpClient();
-        RequestBody requestBody = RequestBody.create(MediaType.parse("application/json;charset=UTF-8"), bytes);
-        Request request = new Request.Builder()
-                .url("http://localhost:8888/test")
-                .post(requestBody)
-                .build();
-        Call call = c.newCall(request);
-        Response execute = call.execute();
-        //得到后端返回字节数组
-        byte[] resultByte = execute.body().bytes();
-        //公钥解密
-        byte[] result = RSACoder.decryptByPublicKey(resultByte,Base64.decodeBase64("MFwwDQYJKoZIhv....."));
-        System.out.println(new String(result));
+        public void test () throws Exception {
+        // Incoming parameters
+            ControllerDemo.UserDemo userDemo = new ControllerDemo.UserDemo ();
+            userDemo.setAge (27);
+            userDemo.setName ("gaoyang");
+            // public key encrypted transmission
+            byte [] bytes = RSACoder.encryptByPublicKey (new ObjectMapper ()
+            .writeValueAsString (userDemo) .getBytes ("utf-8"), Base64.decodeBase64 ("MFwwDQYJKo ...."));
+     // Build http request parameters
+            OkHttpClient c = new OkHttpClient ();
+            RequestBody requestBody = RequestBody.create (MediaType.parse ("application / json; charset = UTF-8"), bytes);
+            Request request = new Request.Builder ()
+                    .url ("http: // localhost: 8888 / test")
+                    .post (requestBody)
+                    .build ();
+            Call call = c.newCall (request);
+            Response execute = call.execute ();
+            // Get back end array of bytes
+            byte [] resultByte = execute.body (). bytes ();
+            // public key decryption
+            byte [] result = RSACoder.decryptByPublicKey (resultByte, Base64.decodeBase64 ("MFwwDQYJKoZIhv ....."));
+            System.out.println (new String (result));
+        }
+```
+
+
+## Four. Springcloud integrated openfeign call encryption interface error reporting:
+
+1) Producer
+```
+    @RestController
+    public class MyController implements MyService {
+        @Override
+        @SeparateEncrypt
+        @PostMapping("get")
+        public Student get(@RequestBody(required = false) Student student) {
+            if (student != null) {
+                System.out.println("i am producer+" + student.getName() + student.getAge());
+            }
+            Student s = new Student();
+            s.setAge(18);
+            s.setName("producer");
+            return s;
+        }
     }
+```
+
+2) Consumers
+
+Encryption and decryption processing classes for encoding and decoding in the same way as producers;
+
+```
+@FeignClient(value = "MECHANT", configuration = {MyClient.MyFeignConfig.class})
+public interface MyClient extends MyService {
+
+    @Override
+    @PostMapping(value = "get", consumes = "application/json")
+    Student get(@RequestBody Student student);
+
+
+    @Configuration
+    class MyFeignConfig {
+        private static Gson gson = new Gson();
+        private static Base64EncryptHandler base64EncryptHandler = new Base64EncryptHandler();
+
+        class MyBase64DeCoder implements Decoder {
+            @Override
+            public Object decode(Response response, Type type) throws IOException, FeignException {
+                try (InputStream inputStream = response.body().asInputStream()) {
+                    byte[] b = new byte[inputStream.available()];
+                    inputStream.read(b);
+                    inputStream.close();
+                    byte[] decode = base64EncryptHandler.decode(b);
+                    return gson.fromJson(new String(decode, "UTF-8"), type);
+                }
+            }
+        }
+
+        class MyBase64EnCoder implements Encoder {
+            @Override
+            public void encode(Object o, Type type, RequestTemplate requestTemplate) throws EncodeException {
+                String s = gson.toJson(o, type);
+                byte[] encode = base64EncryptHandler.encode(s.getBytes());
+                requestTemplate.body(encode, Charset.forName("UTF-8"));
+            }
+        }
+
+
+        @Bean
+        public Decoder myBase64Decoder() {
+            return new MyBase64DeCoder();
+        }
+
+        @Bean
+        public Encoder myBase64Encoder() {
+            return new MyBase64EnCoder();
+        }
+    }
+}
 ```
