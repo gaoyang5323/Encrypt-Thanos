@@ -4,11 +4,13 @@ import com.kakuiwong.config.servlet.EncryptFilter;
 import com.kakuiwong.service.encryService.EncryptHandler;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
-import org.springframework.context.annotation.*;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Condition;
+import org.springframework.context.annotation.ConditionContext;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.core.env.Environment;
 import org.springframework.core.type.AnnotatedTypeMetadata;
 
-@Configuration
 public class WebConfig {
 
     @Autowired(required = false)

@@ -10,7 +10,9 @@
 
 3) Simple integration, a @EnableEncrypt annotation can turn on global encryption rules, and supports @SeparateEncrypt class-level or method-level fine-grained control of encryption
 
-4) yml configuration is simple and provides prompt description
+4) @SortSignEncryptjoin request parameter sort encryption
+
+5) yml configuration is simple and provides prompt description
 
 Note: Currently only decryption of application / json data submission is supported; form submission is not decrypted!
 
@@ -193,7 +195,7 @@ out:
 
 ## Four. Springcloud integrated openfeign call encryption interface error reporting:
 
-1) Producer
+1)Producer
 ```
     @RestController
     public class MyController implements MyService {
@@ -212,7 +214,7 @@ out:
     }
 ```
 
-2) Consumers
+2)Consumers
 
 Encryption and decryption processing classes for encoding and decoding in the same way as producers;
 
@@ -264,4 +266,47 @@ public interface MyClient extends MyService {
         }
     }
 }
+```
+
+## Five.Enable interface request parameter sorting IA
+
+1)annotation and configuration file
+```
+application.properties:
+    {
+     encrypt.sortSignSecret=xx
+    }
+   
+
+    @SortSignEncrypt(timeout = 6000,timeUnit = TimeUnit.MILLISECONDS)
+    @PostMapping("test")
+    public Object test(@RequestBody TestBody testbody,String sign ){
+            //TestBody{xx,xx,String timestamp}
+    }
+```
+
+2)Necessary condition
+
+```
+method=POST;contentType=application/json;
+param: timestamp;sign
+```
+
+3)Default encryption method
+
+```
+After natural ascending sorting of request parameters,
+According to the rule sign = md5(akey=value&timestamp=XX&zkey=value... &Secret = XX)
+```
+
+4)You can customize the encryption method
+
+```
+Custom implementation of sortsignencrypthandler interface and registration
+```
+
+5)Other configurations
+
+```
+If no other encryption method is used,Can be configured as debug,Or annotate a null method of @separateencrypt
 ```

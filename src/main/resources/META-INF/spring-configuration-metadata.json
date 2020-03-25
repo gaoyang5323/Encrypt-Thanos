@@ -40,6 +40,11 @@
       "description": "过滤器启动序号(Filter Start Sequence Number)"
     },
     {
+      "name": "encrypt.sortSignSecret",
+      "type": "java.lang.String",
+      "description": "参数排序加密秘钥,当使用@SortSignEncrypt功能时必填(Parameter sort encryption key, required when using @sortsignencrypt function)"
+    },
+    {
       "name": "encrypt.debug",
       "type": "java.lang.Boolean",
       "description": "是否启用debug模式(Whether debug mode is enabled)"

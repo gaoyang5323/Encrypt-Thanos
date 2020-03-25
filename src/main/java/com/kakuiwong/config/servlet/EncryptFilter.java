@@ -20,8 +20,8 @@ import java.util.concurrent.atomic.LongAdder;
 public class EncryptFilter implements Filter {
 
     private EncryptHandler encryptService;
-    private static AtomicBoolean isEncryptAnnotation = new AtomicBoolean(false);
-    private final static Set<String> encryptCacheUri = new HashSet<>();
+    private AtomicBoolean isEncryptAnnotation = new AtomicBoolean(false);
+    private Set<String> encryptCacheUri = new HashSet<>();
 
     public EncryptFilter(EncryptHandler encryptService) {
         this.encryptService = encryptService;
@@ -34,7 +34,7 @@ public class EncryptFilter implements Filter {
             if (checkUri(httpServletRequest.getRequestURI())) {
                 this.chain(httpServletRequest, servletResponse, filterChain);
             } else {
-                filterChain.doFilter(servletRequest, servletResponse);
+                filterChain.doFilter(EncryptRequestWrapperFactory.getCacheWarpper(httpServletRequest), servletResponse);
             }
         } else {
             this.chain(httpServletRequest, servletResponse, filterChain);

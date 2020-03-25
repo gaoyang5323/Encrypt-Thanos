@@ -1,6 +1,7 @@
 package com.kakuiwong;
 
 import com.kakuiwong.bean.EncryptType;
+import com.kakuiwong.config.web.WebConfig;
 import com.kakuiwong.exception.EncryptException;
 import com.kakuiwong.service.encryService.EncryptHandler;
 import com.kakuiwong.service.encryService.impl.AesEncryptHandler;
@@ -11,11 +12,10 @@ import org.springframework.beans.factory.config.BeanFactoryPostProcessor;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.springframework.beans.factory.support.GenericBeanDefinition;
-import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.context.EnvironmentAware;
-import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Bean;
 import org.springframework.core.env.Environment;
 
 /**
@@ -23,9 +23,12 @@ import org.springframework.core.env.Environment;
  * @email 785175323@qq.com
  * 初始化
  */
-@Configuration
-@EnableAutoConfiguration
 public class EncryptInit implements ApplicationContextAware, BeanFactoryPostProcessor, EnvironmentAware {
+
+    @Bean
+    public WebConfig webConfig() {
+        return new WebConfig();
+    }
 
     private ApplicationContext applicationContext;
     private Environment environment;
